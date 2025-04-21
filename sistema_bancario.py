@@ -10,7 +10,9 @@ def mostrar_menu():
           1. Depositar
           2. Sacar
           3. Consultar extrato
-          4. Sair
+          4. Cadastrar usuário
+          5. Criar conta
+          6. Sair
     =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     """)
 
@@ -134,11 +136,84 @@ def extrato(saldo, transacoes):
     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
     print(f"Saldo atual: R$ {saldo:.2f}")
 
+def cadastrar_usuario(usuarios):
+    """
+    Efetua o cadastro do usuário.
+
+    Parâmetros:
+    usuarios (list): Lista com os usuários já cadastrados.
+    
+    Returns:
+    None
+    """
+
+    print("\n=-=-=-=-=-=-= Cadastro de Usuário =-=-=-=-=-=-=-=-=")
+
+    cpf = input("Digite seu CPF (somente números): ").strip()
+
+    for user in usuarios:
+        if user["cpf"] == cpf:
+            print("CPF já cadastrado.")
+            return
+    
+    nome = input("Digite seu nome: ").strip()
+    data_nascimento = input("Digite sua data de nascimento (dd/mm/aaaa): ").strip()
+
+    print("\nEndereço:")
+    rua = input("Rua: ").strip()
+    numero = input("Número: ").strip()
+    bairro = input("Bairro: ").strip()
+    cidade = input("Cidade: ").strip()
+    estado = input("Estado (sigla): ").strip()
+
+    endereco = f"{rua}, {numero} - {bairro} - {cidade}/{estado}"
+
+    usuarios.append({
+        "nome": nome,
+        "cpf": cpf,
+        "data_nascimento": data_nascimento,
+        "endereco": endereco
+    })
+
+    print("Usuário cadastrado com sucesso!")
+
+def conta_bancaria(contas, usuarios):
+    """
+    Função principal que inicia o sistema bancário.
+    
+    Parâmetros:
+    contas (list): Lista com as contas já cadastradas.
+    usuarios (list): Lista com os usuários já cadastrados.
+
+    Returns:
+    None
+    """
+    
+    print("=-=-=-=-=-=-=-= Cadastro de Conta =-=-=-=-=-=-=-=-=")
+    cpf = input("Digite seu CPF (somente números): ").strip()
+
+    for user in usuarios:
+        if user["cpf"] == cpf:
+            contas.append({
+                "cpf": user["cpf"],
+                "número da conta": len(contas) + 1,
+                "agência": "0001",
+            })
+
+            print(f"\nOlá, {user['nome']}! Conta criada com sucesso.")
+            print("Número da conta:", len(contas))
+            print("Agência: 0001")
+            return
+
+    print("Usuário não encontrado. Verifique o CPF ou cadastre o usuário primeiro.")
+
 saldo = 0 # Inicializa o saldo
 limite_saque = 500 # Define o limite de saque
 limite_diario = 3 # Define o limite diário de saques
 limite_trans = 10 # Define o limite diário de transações
 transacoes = [] # Inicializa a lista de transações
+usuarios = [] # Inicializa a lista de usuários
+contas = [] # Inicializa a lista de contas
 
 # Programa principal
 print("""
@@ -157,8 +232,11 @@ while True:
             saldo, limite_diario, limite_trans = saque(saldo, limite_diario, transacoes, limite_trans, limite_saque)
         elif opcao == 3:
             extrato(saldo, transacoes)
-            print("")
         elif opcao == 4:
+            cadastrar_usuario(usuarios)
+        elif opcao == 5:
+            conta_bancaria(contas, usuarios)
+        elif opcao == 6:
             print("Saindo do sistema, até a próxima!")
             break
         else:
