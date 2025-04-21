@@ -1,3 +1,5 @@
+import datetime
+
 def mostrar_menu():
     """
     Função que exibe o menu principal do sistema.
@@ -12,18 +14,23 @@ def mostrar_menu():
     =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     """)
 
-def depositar(saldo, depositos):
+def depositar(saldo, transacoes, limite_trans):
     """
     Função para realizar depósitos na conta.
     
     Parâmetros:
     saldo (int): Saldo atual da conta.
-    depositos (list): Lista de depósitos realizados.
-    
+    transacoes (list): Lista com os dicionários das transações.
+    limite_trans (int): Limite diário de transações.
+
     Returns:
     int: Saldo após o depósito.
+    int: Limite diário de transações restantes.
     """
-
+    if limite_trans == 0:
+        print("Limite diário de transações atingido.")
+        return saldo, limite_trans
+    
     while True:
         try: # Validando se será um número inteiro
             valor = int(input("Digite o valor do depósito: "))
@@ -32,10 +39,15 @@ def depositar(saldo, depositos):
             if valor <= 0: # Validando que será um número positivo
                 print("Valor inválido. Não é possível depositar valores negativos ou iguais a zero.")
                 continue
-            if valor > 0:
+            elif valor > 0:
                 saldo += valor
                 print(f"Depósito de R$ {valor:.2f} realizado com sucesso!")
-                depositos.append(valor) # Adiciona o valor do depósito à lista de depósitos
+                limite_trans -= 1 # Diminui o limite de transações
+                transacoes.append({
+                    "tipo": "Depósito",
+                    "valor": valor,
+                    "data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                })
                 break
             else:
                 print("Valor inválido. Tente novamente.")
@@ -43,22 +55,28 @@ def depositar(saldo, depositos):
         except ValueError:
             print("Valor inválido. É possível depositar somente números inteiros.")
             continue
-    return saldo
+    return saldo, limite_trans
 
-def saque(saldo, limite_diario, saques):
+def saque(saldo, limite_diario, transacoes, limite_trans, limite_saque):
     """
     Função para realizar saques na conta.
     
     Parâmetros:
     saldo (int): Saldo atual da conta.
     limite_diario (int): Limite diário de saques.
-    saques (list): Lista de saques realizados.
-    
+    transacoes (list): Lista com os dicionários das transações.
+    limite_trans (int): Limite diário de transações.
+    limite_saque (int): Limite máximo de saque.
+
     Returns:
     int: Saldo após o saque.
     int: Limite diário de saques restantes.
+    int: Limite diário de transações restantes.
     """
-
+    if limite_saque == 0:
+        print("Limite diário de saques atingido.")
+        return saldo, limite_diario, limite_trans
+    
     while True:
         try: # Validando se será um número inteiro
             valor = int(input("Digite o valor do saque: "))
@@ -67,63 +85,60 @@ def saque(saldo, limite_diario, saques):
             if valor <= 0:
                 print("Valor inválido. Não é possível sacar valores negativos ou iguais a zero.")
                 continue
-            if valor > saldo:
+            elif valor > saldo:
                 print("Valor inválido. Saldo não disponível.")
                 continue
-            if valor > limite_saque:
+            elif valor > limite_saque:
                 print(f"Valor inválido. O limite de saque é de R$ {limite_saque:.2f}.")
                 continue
-            if limite_diario == 0:
+            elif limite_diario == 0:
                 print("Limite diário de saques atingido.")
                 break
             else:
                 saldo -= valor
                 print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
-                limite_diario -= 1
+                limite_diario -= 1 # Diminui o limite diário de saques
+                limite_trans -= 1 # Diminui o limite de transações
                 print(f"Você ainda pode sacar {limite_diario} vezes hoje.")
-                saques.append(valor) # Adiciona o valor do saque à lista de saques
+                transacoes.append({
+                    "tipo": "Saque",
+                    "valor": valor,
+                    "data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                })
                 break
         except ValueError:
             print("Valor inválido. É possível sacar somente números inteiros.")
             continue
-    return saldo, limite_diario
+    return saldo, limite_diario, limite_trans
 
-def extrato(saldo, depositos, saques):
+def extrato(saldo, transacoes):
     """
     Função para consultar o extrato da conta.
     Informa todos os depósitos, saques e saldo atual.
     
     Parâmetros:
     saldo (int): Saldo atual da conta.
-    extrato (str): Extrato atual da conta.
+    transacoes (list): Lista com os dicionários das transações.
     
     Returns:
     str: Extrato atualizado.
     """
 
-    print("")
-    print("=-=-=-=-=-=-=-=-= Extrato =-=-=-=-=-=-=-=-=-=-=")
-    if not depositos and not saques:
+    print("\n=-=-=-=-=-=-=-=-= Extrato =-=-=-=-=-=-=-=-=-=-=")
+    if not transacoes:
         print("Não foram encontrados lançamentos.")
     else:
-        if depositos:
-            print("Depósitos:")
-            for deposito in depositos:
-                print(f"R$ {deposito:.2f}")
-                print("")
-        if saques:
-            print("Saques:")
-            for saque in saques:
-                print(f"R$ {saque:.2f}")
-                print("")
+        for t in transacoes:
+            print(f"{t['tipo']}: R$ {t['valor']:.2f} - {t['data']}")
+
     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
     print(f"Saldo atual: R$ {saldo:.2f}")
 
 saldo = 0 # Inicializa o saldo
 limite_saque = 500 # Define o limite de saque
 limite_diario = 3 # Define o limite diário de saques
-depositos = [] # Inicializa a lista de depósitos
-saques = [] # Inicializa a lista de saques
+limite_trans = 10 # Define o limite diário de transações
+transacoes = [] # Inicializa a lista de transações
 
 # Programa principal
 print("""
@@ -137,12 +152,11 @@ while True:
         opcao = int(input("Escolha uma opção: "))
 
         if opcao == 1:
-            saldo = depositar(saldo, depositos)
-
+            saldo, limite_trans = depositar(saldo, transacoes, limite_trans)
         elif opcao == 2:
-            saldo, limite_diario = saque(saldo, limite_diario, saques)
+            saldo, limite_diario, limite_trans = saque(saldo, limite_diario, transacoes, limite_trans, limite_saque)
         elif opcao == 3:
-            extrato(saldo, depositos, saques)
+            extrato(saldo, transacoes)
             print("")
         elif opcao == 4:
             print("Saindo do sistema, até a próxima!")
