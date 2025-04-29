@@ -1,5 +1,71 @@
 import datetime
 
+from abc import ABC, abstractmethod
+
+class Historico:
+    def adicionar_transacao(transacao):
+        pass
+
+class Transacao:
+    @abstractmethod
+    def registrar(conta):
+        pass
+
+class Deposito(Transacao):
+    def __init__(self, valor: float):
+        self._valor: float = valor
+
+class Saque(Transacao):
+    def __init__(self, valor: float):
+        self._valor: float = valor
+
+class Conta:
+    def __init__ (self, saldo: float, numero: int, agencia: str, cliente, historico):
+        self._saldo: float = saldo
+        self._numero: int = numero
+        self._agencia: str = agencia
+        self._cliente = cliente
+        self._historico = historico
+
+    def saldo(self):
+        pass
+
+    @classmethod
+    def nova_conta(cls, cliente, numero: int):
+        pass
+
+    def sacar(self, valor: float):
+        pass
+
+    def depositar(self, valor: float):
+        pass
+
+class ContaCorrente(Conta):
+    def __init__(self, saldo: float, numero: int, agencia: str, cliente, historico):
+        super().__init__(saldo, numero, agencia, cliente, historico)
+        self._limite: float = 500.0
+        self._limite_saques: int = 3
+
+class Cliente:
+    def __init__(self, endereco: str, contas: list):
+        self._endereco: str = endereco
+        self._contas: list = contas
+    
+    def realizar_transacao(conta, transacao):
+        pass
+    
+    def adicionar_conta(conta):
+        pass
+
+class PessoaFisica(Cliente):
+    def __init__(self, nome: str, cpf: str, data_nascimento: str):
+        super().__init__(endereco)
+        self._nome: str = nome
+        self._cpf: str = cpf
+        self._data_nascimento: str = data_nascimento
+
+
+
 def mostrar_menu():
     """
     Função que exibe o menu principal do sistema.
