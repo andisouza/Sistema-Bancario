@@ -1,6 +1,6 @@
+import textwrap
 from datetime import datetime
-
-from abc import ABC, abstractmethod, property
+from abc import ABC, abstractmethod
 
 class Historico:
     def __init__(self):
@@ -21,7 +21,7 @@ class Historico:
 
 class Transacao(ABC):
     @property
-    @abstractproperty
+    @abstractmethod
     def valor(self):
         pass
 
@@ -169,248 +169,161 @@ class PessoaFisica(Cliente):
 
 
 
-def mostrar_menu():
-    """
-    Função que exibe o menu principal do sistema.
-    """
-    
-    print("""
-    =-=-=-=-=-=-=-= Menu Principal =-=-=-=-=-=-=-=
-          1. Depositar
-          2. Sacar
-          3. Consultar extrato
-          4. Cadastrar usuário
-          5. Criar conta
-          6. Sair
-    =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-    """)
+def menu():
+    menu = """\n
+    =-=-=-=-=-=-=-=- MENU =-=-=-=-=-=-=-=-
+    [d]\tDepositar
+    [s]\tSacar
+    [e]\tExtrato
+    [nc]\tNova conta
+    [lc]\tListar contas
+    [nu]\tNovo usuário
+    [q]\tSair
+    => """
+    return input(textwrap.dedent(menu))
 
-def depositar(saldo, transacoes, limite_trans):
-    """
-    Função para realizar depósitos na conta.
-    
-    Parâmetros:
-    saldo (int): Saldo atual da conta.
-    transacoes (list): Lista com os dicionários das transações.
-    limite_trans (int): Limite diário de transações.
+def filtrar_cliente(cpf, clientes):
+    clientes_filtrados = [cliente for cliente in clientes if cliente.cpf == cpf]
+    return clientes_filtrados[0] if clientes_filtrados else None
 
-    Returns:
-    int: Saldo após o depósito.
-    int: Limite diário de transações restantes.
-    """
-    if limite_trans == 0:
-        print("Limite diário de transações atingido.")
-        return saldo, limite_trans
+def recuperar_conta_cliente(cliente):
+    if not cliente.contas:
+        print("Cliente não possui contas.")
+        return
     
-    while True:
-        try: # Validando se será um número inteiro
-            valor = int(input("Digite o valor do depósito: "))
-            print("")
-        
-            if valor <= 0: # Validando que será um número positivo
-                print("Valor inválido. Não é possível depositar valores negativos ou iguais a zero.")
-                continue
-            elif valor > 0:
-                saldo += valor
-                print(f"Depósito de R$ {valor:.2f} realizado com sucesso!")
-                limite_trans -= 1 # Diminui o limite de transações
-                transacoes.append({
-                    "tipo": "Depósito",
-                    "valor": valor,
-                    "data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                })
-                break
-            else:
-                print("Valor inválido. Tente novamente.")
-                continue
-        except ValueError:
-            print("Valor inválido. É possível depositar somente números inteiros.")
-            continue
-    return saldo, limite_trans
+    # FIXME: 
+    return cliente.contas[0]
 
-def saque(saldo, limite_diario, transacoes, limite_trans, limite_saque):
-    """
-    Função para realizar saques na conta.
+def depositar(clientes):
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print("Cliente não encontrado.")
+        return
     
-    Parâmetros:
-    saldo (int): Saldo atual da conta.
-    limite_diario (int): Limite diário de saques.
-    transacoes (list): Lista com os dicionários das transações.
-    limite_trans (int): Limite diário de transações.
-    limite_saque (int): Limite máximo de saque.
+    valor = float(input("Informe o valor do depósito: "))
+    transacao = Deposito(valor)
 
-    Returns:
-    int: Saldo após o saque.
-    int: Limite diário de saques restantes.
-    int: Limite diário de transações restantes.
-    """
-    if limite_saque == 0:
-        print("Limite diário de saques atingido.")
-        return saldo, limite_diario, limite_trans
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
     
-    while True:
-        try: # Validando se será um número inteiro
-            valor = int(input("Digite o valor do saque: "))
-            print("")
+    cliente.realizar_transacao(conta, transacao)
 
-            if valor <= 0:
-                print("Valor inválido. Não é possível sacar valores negativos ou iguais a zero.")
-                continue
-            elif valor > saldo:
-                print("Valor inválido. Saldo não disponível.")
-                continue
-            elif valor > limite_saque:
-                print(f"Valor inválido. O limite de saque é de R$ {limite_saque:.2f}.")
-                continue
-            elif limite_diario == 0:
-                print("Limite diário de saques atingido.")
-                break
-            else:
-                saldo -= valor
-                print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
-                limite_diario -= 1 # Diminui o limite diário de saques
-                limite_trans -= 1 # Diminui o limite de transações
-                print(f"Você ainda pode sacar {limite_diario} vezes hoje.")
-                transacoes.append({
-                    "tipo": "Saque",
-                    "valor": valor,
-                    "data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                })
-                break
-        except ValueError:
-            print("Valor inválido. É possível sacar somente números inteiros.")
-            continue
-    return saldo, limite_diario, limite_trans
+def sacar(clientes):
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
 
-def extrato(saldo, transacoes):
-    """
-    Função para consultar o extrato da conta.
-    Informa todos os depósitos, saques e saldo atual.
+    if not cliente:
+        print("Cliente não encontrado.")
+        return
     
-    Parâmetros:
-    saldo (int): Saldo atual da conta.
-    transacoes (list): Lista com os dicionários das transações.
-    
-    Returns:
-    str: Extrato atualizado.
-    """
+    valor = float(input("Informe o valor do saque: "))
+    transacao = Saque(valor)
 
-    print("\n=-=-=-=-=-=-=-=-= Extrato =-=-=-=-=-=-=-=-=-=-=")
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
+    
+    cliente.realizar_transacao(conta, transacao)
+
+def exibir_extrato(clientes):
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print("Cliente não encontrado.")
+        return
+    
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
+    
+    print("\n=-=-=-=-=-=-=Extrato da conta=-=-=-=-=-=-=")
+    transacoes = conta.historico.transacoes
+
+    extrato = ""
     if not transacoes:
-        print("Não foram encontrados lançamentos.")
+        extrato = "Não foram realizadas transações."
     else:
-        for t in transacoes:
-            print(f"{t['tipo']}: R$ {t['valor']:.2f} - {t['data']}")
-
+        for transacao in transacoes:
+            extrato += f"\n{transacao['tipo']}:\n\tR${transacao['valor']:.2f}"
+    
+    print(extrato)
+    print(f"\nSaldo:\n\tR${conta.saldo:.2f}")
     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-    print(f"Saldo atual: R$ {saldo:.2f}")
 
-def cadastrar_usuario(usuarios):
-    """
-    Efetua o cadastro do usuário.
+def criar_cliente(clientes):
+    cpf = input("Digite o cpf: ")
+    cliente = filtrar_cliente(cpf, clientes)
 
-    Parâmetros:
-    usuarios (list): Lista com os usuários já cadastrados.
+    if cliente:
+        print("\n Cliente já cadastrado")
+        return
     
-    Returns:
-    None
-    """
+    nome = input("Digite o nome: ")
+    data_nascimento = input("Digite a data de nascimento (dd/mm/aaaa): ")
+    endereco = input("Digite o endereço: ")
 
-    print("\n=-=-=-=-=-=-= Cadastro de Usuário =-=-=-=-=-=-=-=-=")
+    cliente = PessoaFisica(nome=nome, cpf=cpf, data_nascimento=data_nascimento, endereco=endereco)
 
-    cpf = input("Digite seu CPF (somente números): ").strip()
+    clientes.append(cliente)
 
-    for user in usuarios:
-        if user["cpf"] == cpf:
-            print("CPF já cadastrado.")
-            return
+    print("\n Cliente cadastrado com sucesso! \n")
+
+def criar_conta(numero_conta, clientes, contas):
+    cpf = input("Digite o cpf do cliente:")
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print("\n Cliente não encontrado")
+        return
     
-    nome = input("Digite seu nome: ").strip()
-    data_nascimento = input("Digite sua data de nascimento (dd/mm/aaaa): ").strip()
+    conta = ContaCorrente.nova_conta(cliente=cliente, numero=numero_conta)
+    contas.append(conta)
+    cliente.contas.append(conta)
 
-    print("\nEndereço:")
-    rua = input("Rua: ").strip()
-    numero = input("Número: ").strip()
-    bairro = input("Bairro: ").strip()
-    cidade = input("Cidade: ").strip()
-    estado = input("Estado (sigla): ").strip()
+    print(f"\n Conta criada com sucesso! \n")
 
-    endereco = f"{rua}, {numero} - {bairro} - {cidade}/{estado}"
+def listar_contas(contas):
+    for conta in contas:
+        print("=" * 100)
+        print(textwrap.dedent(str(conta)))
 
-    usuarios.append({
-        "nome": nome,
-        "cpf": cpf,
-        "data_nascimento": data_nascimento,
-        "endereco": endereco
-    })
-
-    print("Usuário cadastrado com sucesso!")
-
-def conta_bancaria(contas, usuarios):
-    """
-    Função principal que inicia o sistema bancário.
-    
-    Parâmetros:
-    contas (list): Lista com as contas já cadastradas.
-    usuarios (list): Lista com os usuários já cadastrados.
-
-    Returns:
-    None
-    """
-    
-    print("=-=-=-=-=-=-=-= Cadastro de Conta =-=-=-=-=-=-=-=-=")
-    cpf = input("Digite seu CPF (somente números): ").strip()
-
-    for user in usuarios:
-        if user["cpf"] == cpf:
-            contas.append({
-                "cpf": user["cpf"],
-                "número da conta": len(contas) + 1,
-                "agência": "0001",
-            })
-
-            print(f"\nOlá, {user['nome']}! Conta criada com sucesso.")
-            print("Número da conta:", len(contas))
-            print("Agência: 0001")
-            return
-
-    print("Usuário não encontrado. Verifique o CPF ou cadastre o usuário primeiro.")
-
-saldo = 0 # Inicializa o saldo
-limite_saque = 500 # Define o limite de saque
-limite_diario = 3 # Define o limite diário de saques
-limite_trans = 10 # Define o limite diário de transações
-transacoes = [] # Inicializa a lista de transações
-usuarios = [] # Inicializa a lista de usuários
-contas = [] # Inicializa a lista de contas
-
-# Programa principal
-print("""
+def main():
+    print("""
     =-=-=-=-=-=-=-= Sistema Bancário =-=-=-=-=-=-=-=
     =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
     """)
 
-while True:
-    try:
-        mostrar_menu() # Chama a função do menu principal
-        opcao = int(input("Escolha uma opção: "))
+    clientes = [] # Inicializa a lista de clientes
+    contas = [] # Inicializa a lista de contas
 
-        if opcao == 1:
-            saldo, limite_trans = depositar(saldo, transacoes, limite_trans)
-        elif opcao == 2:
-            saldo, limite_diario, limite_trans = saque(saldo, limite_diario, transacoes, limite_trans, limite_saque)
-        elif opcao == 3:
-            extrato(saldo, transacoes)
-        elif opcao == 4:
-            cadastrar_usuario(usuarios)
-        elif opcao == 5:
-            conta_bancaria(contas, usuarios)
-        elif opcao == 6:
-            print("Saindo do sistema, até a próxima!")
+    while True:
+        opcao = menu()
+
+        if opcao == "d":
+            depositar(clientes)
+        
+        elif opcao == "s":
+            sacar(clientes)
+        
+        elif opcao == "e":
+            exibir_extrato(clientes)
+        
+        elif opcao == "nu":
+            criar_cliente(clientes)
+        
+        elif opcao == "nc":
+            numero_conta = len(contas) + 1
+            criar_conta(numero_conta, clientes, contas)
+        
+        elif opcao == "lc":
+            listar_contas(contas)
+        
+        elif opcao == "q":
             break
+        
         else:
-            print("Opção inválida. Tente novamente.")
-            continue
-    except ValueError:
-        print("Opção inválida. Digite o número de uma opção válida.")
-        continue
+            print("Opção inválida, tente novamente.")
