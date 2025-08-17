@@ -2,6 +2,18 @@ import textwrap
 from datetime import datetime
 from abc import ABC, abstractmethod
 
+
+class ContaIterador:
+    def __init__(self, contas):
+        pass
+    
+    def __iter__(self):
+        pass
+    
+    def __next__(self):
+        pass
+
+
 class Historico:
     def __init__(self):
         self._transacoes = []
@@ -18,6 +30,10 @@ class Historico:
                 "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             }
         )
+    
+    def gerar_relatorio(self, tipo_transacao=None):
+        pass
+
 
 class Transacao(ABC):
     @property
@@ -28,6 +44,7 @@ class Transacao(ABC):
     @abstractmethod
     def registrar(self, conta):
         pass
+
 
 class Deposito(Transacao):
     def __init__(self, valor):
@@ -43,6 +60,7 @@ class Deposito(Transacao):
         if sucesso_transacao:
             conta.historico.adicionar_transacao(self)
 
+
 class Saque(Transacao):
     def __init__(self, valor):
         self._valor = valor
@@ -56,6 +74,7 @@ class Saque(Transacao):
 
         if sucesso_transacao:
             conta.historico.adicionar_transacao(self)
+
 
 class Conta:
     def __init__ (self, numero, cliente):
@@ -115,6 +134,7 @@ class Conta:
             
         return True
 
+
 class ContaCorrente(Conta):
     def __init__(self, numero, cliente, limite=500, limite_saques=3):
         super().__init__(numero, cliente)
@@ -149,6 +169,7 @@ class ContaCorrente(Conta):
             Titular:\t{self.cliente.nome}
         """
     
+
 class Cliente:
     def __init__(self, endereco, contas):
         self._endereco = endereco
@@ -160,6 +181,7 @@ class Cliente:
     def adicionar_conta(self, conta):
         self.contas.append(conta)
 
+
 class PessoaFisica(Cliente):
     def __init__(self, nome, cpf, data_nascimento, endereco):
         super().__init__(endereco)
@@ -167,6 +189,9 @@ class PessoaFisica(Cliente):
         self._cpf = cpf
         self._data_nascimento = data_nascimento
 
+
+def log_transacao(func):
+    pass
 
 
 def menu():
@@ -182,9 +207,11 @@ def menu():
     => """
     return input(textwrap.dedent(menu))
 
+
 def filtrar_cliente(cpf, clientes):
     clientes_filtrados = [cliente for cliente in clientes if cliente.cpf == cpf]
     return clientes_filtrados[0] if clientes_filtrados else None
+
 
 def recuperar_conta_cliente(cliente):
     if not cliente.contas:
@@ -194,6 +221,8 @@ def recuperar_conta_cliente(cliente):
     # FIXME: 
     return cliente.contas[0]
 
+
+@log_transacao
 def depositar(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -211,6 +240,7 @@ def depositar(clientes):
     
     cliente.realizar_transacao(conta, transacao)
 
+@log_transacao
 def sacar(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -228,6 +258,7 @@ def sacar(clientes):
     
     cliente.realizar_transacao(conta, transacao)
 
+@log_transacao
 def exibir_extrato(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -241,6 +272,7 @@ def exibir_extrato(clientes):
         return
     
     print("\n=-=-=-=-=-=-=Extrato da conta=-=-=-=-=-=-=")
+    # TODO: atualizar a implementação para utilizar o gerador definido em Historico
     transacoes = conta.historico.transacoes
 
     extrato = ""
@@ -254,6 +286,7 @@ def exibir_extrato(clientes):
     print(f"\nSaldo:\n\tR${conta.saldo:.2f}")
     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
 
+@log_transacao
 def criar_cliente(clientes):
     cpf = input("Digite o cpf: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -272,6 +305,7 @@ def criar_cliente(clientes):
 
     print("\n Cliente cadastrado com sucesso! \n")
 
+@log_transacao
 def criar_conta(numero_conta, clientes, contas):
     cpf = input("Digite o cpf do cliente:")
     cliente = filtrar_cliente(cpf, clientes)
@@ -286,10 +320,13 @@ def criar_conta(numero_conta, clientes, contas):
 
     print(f"\n Conta criada com sucesso! \n")
 
+
 def listar_contas(contas):
+    # TODO: alterar implementação para utilizar a classe ContaIterador
     for conta in contas:
         print("=" * 100)
         print(textwrap.dedent(str(conta)))
+
 
 def main():
     print("""
