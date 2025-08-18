@@ -3,15 +3,27 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 
-class ContaIterador:
+class ContasIterador:
     def __init__(self, contas):
-        pass
+        self.contas = contas
+        self._index = 0
     
     def __iter__(self):
-        pass
+        return self
     
     def __next__(self):
-        pass
+        try:
+            conta = self.contas[self._index]
+            return f"""\
+            Agência:\t{conta.agencia}
+            Número:\t\t{conta.numero}
+            Titular:\t{conta.cliente.nome}
+            Saldo:\t\tR$ {conta.saldo:.2f}
+        """
+        except IndexError:
+            raise StopIteration
+        finally:
+            self._index += 1
 
 
 class Historico:
@@ -23,7 +35,7 @@ class Historico:
         return self._transacoes
     
     def adicionar_transacao(self, transacao):
-        self.transacoes.append(
+        self._transacoes.append(
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao._valor,
@@ -32,7 +44,9 @@ class Historico:
         )
     
     def gerar_relatorio(self, tipo_transacao=None):
-        pass
+        for transacao in self._transacoes:
+            if tipo_transacao is None or transacao["tipo"].lower() == tipo_transacao.lower():
+                yield transacao
 
 
 class Transacao(ABC):
@@ -149,7 +163,7 @@ class ContaCorrente(Conta):
         )
 
         excedeu_limite = valor > self._limite
-        excedeu_saques = numero_saques >= self.limite_saques
+        excedeu_saques = numero_saques >= self._limite_saques
 
         if excedeu_limite:
             print("\n Operação falhou! O valor do saque excede o limite.")
@@ -171,9 +185,10 @@ class ContaCorrente(Conta):
     
 
 class Cliente:
-    def __init__(self, endereco, contas):
-        self._endereco = endereco
-        self._contas = []
+    def __init__(self, endereco):
+        self.endereco = endereco
+        self.contas = []
+        self.indice_conta = 0
     
     def realizar_transacao(self, conta, transacao):
         transacao.registrar(conta)
@@ -185,13 +200,18 @@ class Cliente:
 class PessoaFisica(Cliente):
     def __init__(self, nome, cpf, data_nascimento, endereco):
         super().__init__(endereco)
-        self._nome = nome
-        self._cpf = cpf
-        self._data_nascimento = data_nascimento
+        self.nome = nome
+        self.cpf = cpf
+        self.data_nascimento = data_nascimento
 
 
 def log_transacao(func):
-    pass
+    def wrapper(*args, **kwargs):
+        print(f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {func.__name__.upper()}")
+        resultado = func(*args, **kwargs)
+        return resultado
+    
+    return wrapper
 
 
 def menu():
@@ -272,16 +292,16 @@ def exibir_extrato(clientes):
         return
     
     print("\n=-=-=-=-=-=-=Extrato da conta=-=-=-=-=-=-=")
-    # TODO: atualizar a implementação para utilizar o gerador definido em Historico
-    transacoes = conta.historico.transacoes
-
     extrato = ""
-    if not transacoes:
-        extrato = "Não foram realizadas transações."
-    else:
-        for transacao in transacoes:
-            extrato += f"\n{transacao['tipo']}:\n\tR${transacao['valor']:.2f}"
-    
+    tem_transacao = False
+
+    for transacao in conta.historico.gerar_relatorio(tipo_transacao="saque"):
+        tem_transacao = True
+        extrato += f"\n{transacao['tipo']}:\n\tR$ {transacao['valor']:.2f}"
+
+    if not tem_transacao:
+        extrato = "Não foram realizadas movimentações."
+
     print(extrato)
     print(f"\nSaldo:\n\tR${conta.saldo:.2f}")
     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
@@ -322,8 +342,7 @@ def criar_conta(numero_conta, clientes, contas):
 
 
 def listar_contas(contas):
-    # TODO: alterar implementação para utilizar a classe ContaIterador
-    for conta in contas:
+    for conta in ContasIterador(contas):
         print("=" * 100)
         print(textwrap.dedent(str(conta)))
 
@@ -364,3 +383,7 @@ def main():
         
         else:
             print("Opção inválida, tente novamente.")
+
+
+
+main()
