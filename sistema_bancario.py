@@ -1,6 +1,9 @@
 import textwrap
 from datetime import datetime
 from abc import ABC, abstractmethod
+from pathlib import Path
+
+ROOT_PATH = Path(__file__).parent
 
 
 class ContasIterador:
@@ -176,6 +179,9 @@ class ContaCorrente(Conta):
         
         return False
     
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: ('{self.agencia}', '{self.numero}', '{self.cliente.nome}')>"
+    
     def __str__(self):
         return f"""\
             Agência:\t{self.agencia}
@@ -204,11 +210,20 @@ class PessoaFisica(Cliente):
         self.cpf = cpf
         self.data_nascimento = data_nascimento
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: ({self.cpf})"
+
 
 def log_transacao(func):
     def wrapper(*args, **kwargs):
-        print(f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {func.__name__.upper()}")
         resultado = func(*args, **kwargs)
+        data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        with open(ROOT_PATH / "log.txt", "a") as arquivo:
+            arquivo.write(
+                f"[{data_hora} Função '{func.__name__}' executada com argumentos {args} e {kwargs}. "
+                f"Retornou {resultado}\n]"
+            )
         return resultado
     
     return wrapper

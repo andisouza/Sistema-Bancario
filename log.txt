@@ -1,0 +1,5 @@
+[2025-08-18 14:49:49 Função 'criar_cliente' executada com argumentos ([<PessoaFisica: (14407253657)],) e {}. Retornou None
+][2025-08-18 14:52:10 Função 'depositar' executada com argumentos ([<PessoaFisica: (14407253657)],) e {}. Retornou None
+][2025-08-18 14:52:26 Função 'criar_conta' executada com argumentos (1, [<PessoaFisica: (14407253657)], [<ContaCorrente: ('0001', '1', 'andi souza')>]) e {}. Retornou None
+][2025-08-18 14:52:32 Função 'depositar' executada com argumentos ([<PessoaFisica: (14407253657)],) e {}. Retornou None
+]
